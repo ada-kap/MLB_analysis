@@ -6,7 +6,7 @@ This project was created as part of the Udemy course **“SQL for Data Analysis:
 
 Aspiring data analyst transitioning from a different career background. Passionate about turning real-world data into actionable insights. This project is part of a growing data analytics portfolio aimed at showcasing practical SQL skills.
 
-## 🎯 Project Goal
+🎯 Project Goal
 
 - Analyze the relationship between MLB players and the schools they attended.
 - Practice advanced SQL querying techniques using real-world relational data.
@@ -14,7 +14,7 @@ Aspiring data analyst transitioning from a different career background. Passiona
 
 ---
 
-## 🗃️ Dataset Overview
+ 🗃️ Dataset Overview
 
 The analysis is based on two main tables:
 
@@ -50,21 +50,21 @@ The analysis is based on two main tables:
 | birthYear       | INT  | Year of birth                                |
 | birthMonth      | INT  | Month of birth                               |
 | birthDay        | INT  | Day of birth                                 |
-| debut\_date     | DATE | Date of first MLB game                       |
-| finalGame\_date | DATE | Date of last MLB game                        |
+| debut_date      | TEXT | Date of first MLB game                       |
+| finalGame_date  | TEXT | Date of last MLB game                        |
 | nameFirst       | TEXT | First name                                   |
 | nameLast        | TEXT | Last name                                    |
 | ...             | ...  | Additional biographical columns omitted here |
 
 ---
 
-⚙️ Tools & Technologies
+⚙️ Tools & Technologies 
 - MySQL
 - SQL client: DBeaver
 - Data source: Provided via Udemy course dataset
 - GitHub
 
-## 🔍 Key Analytical Questions
+ 🔍 Key Analytical Questions
 
 1. How many schools produced MLB players in each decade?
    _Purpose: Analyze the growth or decline of schools contributing to MLB players over time._
@@ -73,19 +73,19 @@ The analysis is based on two main tables:
    _Purpose: Identify the most influential schools in player development._
 
 3. For each decade, which were the top 3 schools producing the most players?
-   _Purpose: Understand shifts in dominance among schools over different eras.
+   _Purpose: Understand shifts in dominance among schools over different eras._
    
-5. Return the top 20% of teams in terms of average annual spending
-   _Goal: Identify the biggest spenders among teams.
+5. Return the top 20% of teams in terms of average annual spending.
+    _Goal: Identify the biggest spenders among teams._
 
-7. For each team, show the cumulative sum of spending over the years
-   _Goal: Visualize long-term team investment.
+7. For each team, show the cumulative sum of spending over the years.
+   _Goal: Visualize long-term team investment._
 
-9. Return the first year that each team’s cumulative spending surpassed 1 billion USD
-   _Goal: Understand financial growth over time.
+9. Return the first year that each team’s cumulative spending surpassed 1 billion USD.
+   _Goal: Understand financial growth over time._
 
 10. How many players are in the table?
-    _Goal: Get basic scope of the dataset.
+    _Goal: Get basic scope of the dataset._
 
 12. For each player, calculate age at debut, age at final game, and career length (in years). 
-    _Goal: Analyze career duration across MLB history.
+   _Goal: Analyze career duration across MLB history._
