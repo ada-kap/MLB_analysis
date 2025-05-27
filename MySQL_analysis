@@ -64,7 +64,7 @@ percentile AS (
 SELECT 
   teamID
   ,AVG(total_spend_per_year) AS avg_spend
-	,NTILE(5) OVER (ORDER BY AVG(total_spend_per_year) DESC) AS spend_percentile
+  ,NTILE(5) OVER (ORDER BY AVG(total_spend_per_year) DESC) AS spend_percentile
 FROM total_spend
 GROUP BY teamID
 )
@@ -88,37 +88,129 @@ PHI    |  66.1 --
 /*5. For each team, show the cumulative sum of spending over the years. */
 
 WITH total_spend AS (
-          SELECT teamID
-                ,yearID
-                ,SUM(salary) AS total_spend_per_year
-					FROM salaries s 
-					GROUP BY teamID, yearID)
-  SELECT teamID
+SELECT teamID
+	,yearID
+	,SUM(salary) AS total_spend_per_year
+FROM salaries s 
+GROUP BY teamID, yearID
+)
+SELECT 	teamID
         ,yearID 
-			  ,ROUND((SUM(total_spend_per_year) OVER (PARTITION BY teamID ORDER BY yearID ASC)/1000000),2) AS cumulative_spend
-	FROM total_spend
+	,ROUND((SUM(total_spend_per_year) OVER (PARTITION BY teamID ORDER BY yearID ASC)/1000000),2) AS cumulative_spend
+FROM total_spend
 
 /* 6. Return the first year that each team's cumulative spending surpassed 1 billion. */ 
+
 WITH total_spend AS (
-        SELECT teamID
-              ,yearID
-              ,SUM(salary) AS total_spend_per_year
-				FROM salaries s 
-				GROUP BY teamID, yearID),
+SELECT teamID
+	,yearID
+        ,SUM(salary) AS total_spend_per_year
+FROM salaries s 
+GROUP BY teamID, yearID
+),
 ts AS (
-        SELECT teamID
-              ,yearID 
-			        ,ROUND((SUM(total_spend_per_year) OVER (PARTITION BY teamID ORDER BY yearID ASC)/1000000000),2) AS cum_spend_bilions
-			  FROM total_spend
-        ),
+SELECT teamID
+	,yearID 
+	,ROUND((SUM(total_spend_per_year) OVER (PARTITION BY teamID ORDER BY yearID ASC)/1000000000),2) AS cum_spend_bilions
+FROM total_spend
+),
 ts_bilion AS (
-      SELECT * FROM ts WHERE cum_spend_bilions >= 1),
+SELECT * FROM ts WHERE cum_spend_bilions >= 1),
 ranking AS (
-        SELECT *,
-				      RANK() OVER (PARTITION BY teamId ORDER BY yearId ASC) AS ranking
-			  FROM ts_bilion)
+SELECT *,
+	RANK() OVER (PARTITION BY teamId ORDER BY yearId ASC) AS ranking
+FROM ts_bilion
+)
 SELECT teamID
       ,yearID
       ,cum_spend_bilions
 FROM ranking 
 WHERE ranking =1
+
+/* 7. Find the number of players in the table. */
+
+SELECT COUNT(playerID) FROM players 
+--RESULT: 18589 --
+
+/* 8.  For each player, calculate their age at their first game, their last game, and their career length (all in years). 
+
+WITH birthday_date AS (
+SELECT 
+	playerID
+        ,namegiven
+        ,CAST(CONCAT(birthYear, '-', birthMonth, '-', birthDay) AS DATE) AS birth_date
+FROM players
+),
+debut_date AS (
+SELECT 
+        playerID
+        ,namegiven 
+        ,debut 
+        ,CASE 
+            WHEN debut LIKE '%/%/%' THEN
+                CASE
+                    WHEN YEAR(STR_TO_DATE(debut, '%m/%d/%y')) > YEAR(CURDATE()) THEN
+                        DATE_SUB(STR_TO_DATE(debut, '%m/%d/%y'), INTERVAL 100 YEAR)
+                    ELSE
+                        STR_TO_DATE(debut, '%m/%d/%y')
+                END
+            ELSE
+                STR_TO_DATE(debut, '%Y-%m-%d')
+        END AS parsed_debut_date
+FROM players
+),
+debut_year AS ( 
+SELECT playerID, YEAR(parsed_debut_date) AS deb_year FROM debut_date
+),
+finalgame_date AS (
+SELECT 
+	 p1.playerID
+        ,p1.namegiven
+        ,finalgame
+        ,CASE 
+            WHEN finalgame LIKE '%/%/%' THEN
+                CASE
+                    WHEN YEAR(STR_TO_DATE(finalgame, '%m/%d/%y')) < dy.deb_year THEN
+                        DATE_Add(STR_TO_DATE(finalgame, '%m/%d/%y'), INTERVAL 100 YEAR)
+                    ELSE
+                        STR_TO_DATE(finalgame, '%m/%d/%y')
+                END
+            ELSE
+                STR_TO_DATE(finalgame, '%Y-%m-%d')
+        END AS parsed_finalgame_date
+FROM players p1 INNER JOIN debut_year dy 
+ON p1.playerID = dy.playerID
+),
+final AS (
+SELECT
+	bd.playerID, 
+	,bd.namegiven, 
+	,bd.birth_date,
+	,dd.debut, 
+	,dd.parsed_debut_date, 
+	,fgd.finalgame, 
+	,fgd.parsed_finalgame_date,
+	,TIMESTAMPDIFF(YEAR, bd.birth_date, dd.parsed_debut_date) AS debut_age,
+	,TIMESTAMPDIFF(YEAR, bd.birth_date, fgd.parsed_finalgame_date) AS finalgame_age,
+	,TIMESTAMPDIFF(YEAR, dd.parsed_debut_date, fgd.parsed_finalgame_date) AS career_length
+FROM birthday_date bd 
+LEFT JOIN debut_date dd 
+ON bd.playerID = dd.playerID
+LEFT JOIN finalgame_date fgd 
+ON bd.playerID = fgd.playerID
+),
+adjusted_age AS (
+SELECT *, 
+	CASE WHEN debut_age > 100 THEN debut_age - 100
+	ELSE debut_age 
+		END AS adjusted_debut_age,
+	CASE WHEN finalgame_age > 100 THEN finalgame_age - 100 
+	ELSE finalgame_age 
+		END AS adjusted_finalgame_age
+FROM final)
+SELECT namegiven
+	,adjusted_debut_age
+	,adjusted_finalgame_age
+	,adjusted_finalgame_age - adjusted_debut_age AS correct_career_length
+FROM adjusted_age 
+ORDER BY correct_career_length DESC 
