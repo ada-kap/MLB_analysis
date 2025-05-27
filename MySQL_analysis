@@ -214,3 +214,15 @@ SELECT namegiven
 	,adjusted_finalgame_age - adjusted_debut_age AS correct_career_length
 FROM adjusted_age 
 ORDER BY correct_career_length DESC 
+
+/* 9. Which players have the same birthday? */
+WITH bd AS (
+SELECT	CAST(CONCAT(birthYear,'-', birthMonth, '-',birthDay) AS DATE) AS birthdate
+	,nameGiven
+FROM players p)
+SELECT 	birthdate
+	,GROUP_CONCAT(namegiven) AS name_list
+FROM bd
+WHERE birthdate IS NOT NULL 
+GROUP BY birthdate
+HAVING COUNT(namegiven) >= 2
